@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoCash Payment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            max-width: 480px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: white;
+            padding: 32px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .form-container {
+            padding: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            font-weight: 500;
+            color: #1e293b;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background: white;
+            color: #1e293b;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #0284c7;
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.1);
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 20px;
+            padding-right: 40px;
+        }
+
+        .package-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .package-option {
+            position: relative;
+        }
+
+        .package-option input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .package-label {
+            display: block;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .package-option input[type="radio"]:checked + .package-label {
+            border-color: #0284c7;
+            background: #f0f9ff;
+        }
+
+        .package-label:hover {
+            border-color: #0284c7;
+        }
+
+        .package-name {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 16px;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 8px;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(2, 132, 199, 0.4);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 24px;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+
+        .result.success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #86efac;
+            display: block;
+        }
+
+        .result.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+            display: block;
+        }
+
+        .result.processing {
+            background: #fef3c7;
+            color: #854d0e;
+            border: 1px solid #fcd34d;
+            display: block;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .security-badge {
+            text-align: center;
+            padding: 16px;
+            color: #64748b;
+            font-size: 13px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 16px;
+            }
+
+            .container {
+                border-radius: 12px;
+                max-width: 100%;
+            }
+
+            .header {
+                padding: 24px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .header p {
+                font-size: 13px;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+            label {
+                font-size: 13px;
+                margin-bottom: 6px;
+            }
+
+            input[type="text"],
+            input[type="number"],
+            select {
+                padding: 11px 14px;
+                font-size: 16px;
+            }
+
+            .package-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .package-label {
+                padding: 14px;
+            }
+
+            .package-name {
+                font-size: 15px;
+            }
+
+            .submit-btn {
+                padding: 12px;
+                font-size: 15px;
+            }
+
+            .result {
+                padding: 14px;
+                font-size: 13px;
+            }
+
+            .security-badge {
+                padding: 12px;
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 12px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+                margin-bottom: 6px;
+            }
+
+            .form-container {
+                padding: 16px;
+            }
+
+            .form-group {
+                margin-bottom: 16px;
+            }
+
+            .package-grid {
+                gap: 8px;
+            }
+
+            .package-label {
+                padding: 12px 8px;
+            }
+
+            .package-name {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>EcoCash Payment</h1>
+            <p>Select your data package and complete payment</p>
+        </div>
+
+        <div class="form-container">
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input
+                        type="text"
+                        id="phone"
+                        placeholder="0771231234"
+                        pattern="0[0-9]{9}"
+                        title="Please enter a valid phone number (e.g., 0771231234)"
+                        required
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label>Select Package</label>
+                    <div class="package-grid">
+                        <div class="package-option">
+                            <input type="radio" name="package" id="pkg1gb" value="1GB" required>
+                            <label for="pkg1gb" class="package-label">
+                                <div class="package-name">1GB</div>
+                            </label>
+                        </div>
+                        <div class="package-option">
+                            <input type="radio" name="package" id="pkg5gb" value="5GB">
+                            <label for="pkg5gb" class="package-label">
+                                <div class="package-name">5GB</div>
+                            </label>
+                        </div>
+                        <div class="package-option">
+                            <input type="radio" name="package" id="pkg10gb" value="10GB">
+                            <label for="pkg10gb" class="package-label">
+                                <div class="package-name">10GB</div>
+                            </label>
+                        </div>
+                        <div class="package-option">
+                            <input type="radio" name="package" id="pkgunlimited" value="unlimited">
+                            <label for="pkgunlimited" class="package-label">
+                                <div class="package-name">Unlimited</div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+              
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    Pay Now
+                </button>
+
+                <div id="result" class="result"></div>
+            </form>
+        </div>
+
+        <div class="security-badge">
+            🔒 Secured by EcoCash Payment Gateway
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById("paymentForm");
+        const submitBtn = document.getElementById("submitBtn");
+        const resultDiv = document.getElementById("result");
+
+        form.addEventListener("submit", function(e) {
+            e.preventDefault();
+
+            // Get form values
+            const phone = document.getElementById("phone").value;
+            const packageSelected = document.querySelector('input[name="package"]:checked').value;
+            
+
+            // Disable button and show loading
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Processing<span class="loading-spinner"></span>';
+
+            resultDiv.className = "result processing";
+            resultDiv.textContent = "Processing your payment request...";
+
+            // Send payment request
+            fetch("/api/payment/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    customerMsisdn: phone,
+                    package: packageSelected,
+                   
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Pay Now';
+
+                if(data.success) {
+                    resultDiv.className = "result success";
+                    resultDiv.textContent = "✓ Payment request sent successfully";
+
+                    // Wait 10 seconds before showing voucher
+                    setTimeout(() => {
+                        if(data.voucher) {
+                            resultDiv.textContent = "✓ Your Voucher Code: " + data.voucher;
+
+                            // Optional: Create a more elegant alert/modal
+                            alert("🎉 Your Voucher Code: " + data.voucher);
+                        } else {
+                            resultDiv.textContent = "✓ Payment request sent. Your voucher will be delivered shortly.";
+                        }
+                    }, 10000);
+
+                } else {
+                    resultDiv.className = "result error";
+                    resultDiv.textContent = "✗ " + (data.error || "Payment failed. Please try again.");
+                }
+            })
+            .catch(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Pay Now';
+                resultDiv.className = "result error";
+                resultDiv.textContent = "✗ Network error. Please check your connection and try again.";
+            });
+        });
+    </script>
+</body>
+</html>
