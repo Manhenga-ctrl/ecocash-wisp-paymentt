@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoCash Payment</title>
+    <title>WIFI PAYMENT PORTAL</title>
     <style>
         * {
             margin: 0;
@@ -94,49 +94,6 @@
             background-position: right 12px center;
             background-size: 20px;
             padding-right: 40px;
-        }
-
-        .package-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            margin-top: 8px;
-        }
-
-        .package-option {
-            position: relative;
-        }
-
-        .package-option input[type="radio"] {
-            position: absolute;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        .package-label {
-            display: block;
-            padding: 16px;
-            border: 2px solid #e2e8f0;
-            border-radius: 8px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            background: white;
-        }
-
-        .package-option input[type="radio"]:checked + .package-label {
-            border-color: #0284c7;
-            background: #f0f9ff;
-        }
-
-        .package-label:hover {
-            border-color: #0284c7;
-        }
-
-        .package-name {
-            font-weight: 600;
-            color: #1e293b;
-            font-size: 16px;
         }
 
         .submit-btn {
@@ -266,19 +223,6 @@
                 font-size: 16px;
             }
 
-            .package-grid {
-                grid-template-columns: 1fr;
-                gap: 10px;
-            }
-
-            .package-label {
-                padding: 14px;
-            }
-
-            .package-name {
-                font-size: 15px;
-            }
-
             .submit-btn {
                 padding: 12px;
                 font-size: 15px;
@@ -316,25 +260,13 @@
             .form-group {
                 margin-bottom: 16px;
             }
-
-            .package-grid {
-                gap: 8px;
-            }
-
-            .package-label {
-                padding: 12px 8px;
-            }
-
-            .package-name {
-                font-size: 14px;
-            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>EcoCash Payment</h1>
+            <h1>WIFI ECOCASH PAYMENT PORTAL</h1>
             <p>Select your data package and complete payment</p>
         </div>
 
@@ -353,36 +285,15 @@
                 </div>
 
                 <div class="form-group">
-                    <label>Select Package</label>
-                    <div class="package-grid">
-                        <div class="package-option">
-                            <input type="radio" name="package" id="pkg1gb" value="1GB" required>
-                            <label for="pkg1gb" class="package-label">
-                                <div class="package-name">1GB</div>
-                            </label>
-                        </div>
-                        <div class="package-option">
-                            <input type="radio" name="package" id="pkg5gb" value="5GB">
-                            <label for="pkg5gb" class="package-label">
-                                <div class="package-name">5GB</div>
-                            </label>
-                        </div>
-                        <div class="package-option">
-                            <input type="radio" name="package" id="pkg10gb" value="10GB">
-                            <label for="pkg10gb" class="package-label">
-                                <div class="package-name">10GB</div>
-                            </label>
-                        </div>
-                        <div class="package-option">
-                            <input type="radio" name="package" id="pkgunlimited" value="unlimited">
-                            <label for="pkgunlimited" class="package-label">
-                                <div class="package-name">Unlimited</div>
-                            </label>
-                        </div>
-                    </div>
+                    <label for="package">Select Package</label>
+                    <select id="package" name="package" required>
+                        <option value="" disabled selected>Choose a package...</option>
+                        <option value="1GB">1GB</option>
+                        <option value="5GB">5GB</option>
+                        <option value="10GB">10GB</option>
+                        <option value="unlimited">Unlimited</option>
+                    </select>
                 </div>
-
-            
 
                 <button type="submit" class="submit-btn" id="submitBtn">
                     Pay Now
@@ -407,8 +318,7 @@
 
             // Get form values
             const phone = document.getElementById("phone").value;
-            const packageSelected = document.querySelector('input[name="package"]:checked').value;
-            
+            const packageSelected = document.getElementById("package").value;
 
             // Disable button and show loading
             submitBtn.disabled = true;
@@ -426,7 +336,6 @@
                 body: JSON.stringify({
                     customerMsisdn: phone,
                     package: packageSelected,
-                   
                 })
             })
             .then(res => res.json())
@@ -448,7 +357,7 @@
                         } else {
                             resultDiv.textContent = "✓ Payment request sent. Your voucher will be delivered shortly.";
                         }
-                    }, 35000);
+                    }, 2500);
 
                 } else {
                     resultDiv.className = "result error";

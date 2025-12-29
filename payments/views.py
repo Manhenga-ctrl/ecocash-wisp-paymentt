@@ -13,9 +13,10 @@ ECOCASH_STATUS_URL = "https://developers.ecocash.co.zw/api/ecocash_pay/api/v1/tr
 API_KEY = "MWocwVxw_vyA5tM8TiRpZGfkw3OzTkc2"
 
 payment_processor = EcoCashPayment()
+Database="db.sqlite3"
 
 
-def get_voucher_by_package(package, db_path="db.sqlite3"):
+def get_voucher_by_package(package, db_path=Database):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -103,7 +104,7 @@ def api_payment(request):
 
 # Retrieve voucher based on package
 
-    time.sleep(30)  
+    time.sleep(20)  
     conn = sqlite3.connect("db.sqlite3")
     cursor = conn.cursor()
 
