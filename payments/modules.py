@@ -1,48 +1,50 @@
-import json
-import os
-from .models import VoucherTransaction
+import sqlite3
 
-VOUCHER_FILE = os.path.join(
-    os.path.dirname(__file__),
-    "vouchers.json"
-)
+def get_voucher_by_package(package, db_path="db.sqlite3"):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
+    # Lock database to avoid duplicate usage
+    conn.execute("BEGIN IMMEDIATE")
 
-def load_vouchers():
-    if not os.path.exists(VOUCHER_FILE):
-        return []
+    cursor.execute("""
+        SELECT id, voucher_code
+        FROM payments_voucher
+        WHERE used = 0 AND package = ?
+        LIMIT 1
+    """, (package,))
 
-    with open(VOUCHER_FILE, "r") as file:
-        return json.load(file)
+    voucher = cursor.fetchone()
 
+    if voucher is None:
+        conn.rollback()
+        conn.close()
+        return None
 
-def save_vouchers(vouchers):
-    with open(VOUCHER_FILE, "w") as file:
-        json.dump(vouchers, file, indent=4)
+    voucher_id, voucher_code = voucher
 
+    # Mark as used
+    cursor.execute("""
+        UPDATE payments_voucher
+        SET used = 1
+        WHERE id = ?
+    """, (voucher_id,))
 
-def get_random_unused_voucher(package):
-    """
-    Returns a random unused voucher for the given package
-    """
-    vouchers = load_vouchers()
+    conn.commit()
+    conn.close()
 
-    for voucher in vouchers:
-        if (
-            voucher.get("package") == package
-            and voucher.get("used") is False
-        ):
-            voucher["used"] = True
-            save_vouchers(vouchers)
-            return voucher
-
-    return None
+    return voucher_code
 
 
-def check_reference(reference):
-    """
-    Prevent duplicate voucher issuing
-    """
-    return VoucherTransaction.objects.filter(
-        source_reference=reference
-    ).exists()
+
+
+
+
+package_type = "1GB"   # or "premium", "gold", etc.
+
+voucher = get_voucher_by_package(package_type)
+
+if voucher:
+    print(f"Voucher for {package_type}: {voucher}")
+else:
+    print(f"No vouchers available for {package_type}")

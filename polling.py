@@ -3,9 +3,9 @@ import requests
 import time
 import logging
 
-# =======================
+
 # CONFIGURATION
-# =======================
+
 
 DB_PATH = "db.sqlite3"
 TABLE_NAME = "payments_transaction"
@@ -26,9 +26,9 @@ logging.basicConfig(
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
-# =======================
+
 # DATABASE FUNCTIONS
-# =======================
+
 
 def get_pending_transactions():
     """
@@ -59,9 +59,9 @@ def update_transaction_status(source_reference, status):
         conn.commit()
 
 
-# =======================
+
 # ECOCASH STATUS CHECK
-# =======================
+
 
 def check_ecocash_status(transaction):
     customer_msisdn, source_reference, package = transaction

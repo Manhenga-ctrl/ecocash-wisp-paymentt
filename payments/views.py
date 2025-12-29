@@ -1,15 +1,13 @@
 
-
-
 import json
 import requests
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
-
-from .models import EcoCashTransaction, VoucherTransaction
+import sqlite3
 from .services import EcoCashPayment
-from .modules import get_random_unused_voucher
+import time
+
 
 ECOCASH_STATUS_URL = "https://developers.ecocash.co.zw/api/ecocash_pay/api/v1/transaction/c2b/status/sandbox"
 API_KEY = "MWocwVxw_vyA5tM8TiRpZGfkw3OzTkc2"
@@ -17,12 +15,46 @@ API_KEY = "MWocwVxw_vyA5tM8TiRpZGfkw3OzTkc2"
 payment_processor = EcoCashPayment()
 
 
+def get_voucher_by_package(package, db_path="db.sqlite3"):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # Lock database to avoid duplicate usage
+    conn.execute("BEGIN IMMEDIATE")
+
+    cursor.execute("""
+        SELECT id, voucher_code
+        FROM payments_voucher
+        WHERE used = 0 AND package = ?
+        LIMIT 1
+    """, (package,))
+
+    voucher = cursor.fetchone()
+
+    if voucher is None:
+        conn.rollback()
+        conn.close()
+        return None
+
+    voucher_id, voucher_code = voucher
+
+    # Mark as used
+    cursor.execute("""
+        UPDATE payments_voucher
+        SET used = 1
+        WHERE id = ?
+    """, (voucher_id,))
+
+    conn.commit()
+    conn.close()
+
+    return voucher_code
 
 
-# Create your views here.
 
 
 
+# View to render payment page
 
 def payment_page(request):
     return render(request, "payment.html")
@@ -69,78 +101,44 @@ def api_payment(request):
         package
     )
 
-    if not customer_msisdn or not package or not amount:
-        return JsonResponse({"error": "Missing fields"}, status=400)
+# Retrieve voucher based on package
 
-    # For testing, generate a fake voucher code
-    test_voucher = "TEST123ABC"
+    time.sleep(30)  
+    conn = sqlite3.connect("db.sqlite3")
+    cursor = conn.cursor()
+
+    cursor.execute(
+    "SELECT status FROM payments_transaction WHERE customer_msisdn = ?",
+    (customer_msisdn,)
+)
+
+    status = cursor.fetchone()
+    status=status[0]
+
+
+  # Wait for 30 seconds before checking status
+    Voucher = get_voucher_by_package(package)
+    
+
+    if status=="SUCCESS":
+
+            voucher = Voucher
+        
+
+    if status=="NULL" or status=="PENDING":
+         voucher = "Payment is still being processed. Please wait."
+
+
+    
 
     response_data = {
         "success": True,
         "message": "Payment request sent successfully",
-        "voucher": test_voucher  # ✅ Send voucher in response
+        "voucher": voucher  # ✅ Send voucher in response
     }
     result = {**result, **response_data}
     return JsonResponse(result)
 
 
 
-
-def check_transaction(request):
-    status_message = None
-
-    if request.method == "POST":
-        phone_number = request.POST.get("phone_number")
-
-        transaction = EcoCashTransaction.objects.filter(
-            customer_msisdn=phone_number
-        ).last()
-
-        if not transaction:
-            return render(request, "index.html", {
-                "error_message": "Phone number not found"
-            })
-
-        payload = {
-            "sourceMobileNumber": phone_number,
-            "sourceReference": transaction.source_reference
-        }
-
-        headers = {
-            "X-API-KEY": API_KEY,
-            "Content-Type": "application/json"
-        }
-
-        response = requests.post(
-            ECOCASH_STATUS_URL,
-            json=payload,
-            headers=headers
-        )
-
-        status = response.json().get("status")
-
-        if status == "SUCCESS":
-            if not VoucherTransaction.objects.filter(
-                source_reference=transaction.source_reference
-            ).exists():
-
-                voucher = get_random_unused_voucher(transaction.package)  # ✅ CHANGED
-
-                VoucherTransaction.objects.create(
-                    source_reference=transaction.source_reference,
-                    voucher_code=voucher["Voucher ID"],
-                    phone_number=phone_number
-                )
-
-                status_message = (
-                    f"✅ PAYMENT SUCCESS. YOUR {transaction.package.upper()} "
-                    f"VOUCHER: {voucher['Voucher ID']}"
-                )
-
-        else:
-            status_message = f"🔄 STATUS: {status}"
-
-    return render(request, "index.html", {
-        "status_message": status_message
-    })
 

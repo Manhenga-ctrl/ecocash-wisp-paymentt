@@ -14,11 +14,6 @@ class EcoCashTransaction(models.Model):
         return f"{self.customer_msisdn} - {self.package}"
 
 
-class VoucherTransaction(models.Model):
-    source_reference = models.CharField(max_length=64, unique=True)
-    voucher_code = models.CharField(max_length=100)
-    phone_number = models.CharField(max_length=12)
-    issued_at = models.DateTimeField(auto_now_add=True)
 
 
 class Transaction(models.Model):
