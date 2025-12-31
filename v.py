@@ -1,5 +1,4 @@
-import sqlite3
-
+"""""
 # Connect to existing SQLite database
 conn = sqlite3.connect("db.sqlite3")
 cursor = conn.cursor()
@@ -22,3 +21,20 @@ else:
 
 # Close connection
 conn.close()
+"""
+
+from librouteros import connect
+
+api = connect(
+    host='10.10.2.1',
+    username='chiponda',
+    password='admin'
+)
+
+# Get generated vouchers from user manager
+vouchers = api('/ip/hotspot/user/print')
+for v in vouchers:
+    username = v.get('name')  # handle both cases
+    password = v.get('password', 'N/A')
+    profile = v.get('profile', 'N/A')
+    print(username, password, profile)

@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 import sqlite3
 from .services import EcoCashPayment
 import time
+from .models import Package
 
 
 ECOCASH_STATUS_URL = "https://developers.ecocash.co.zw/api/ecocash_pay/api/v1/transaction/c2b/status/sandbox"
@@ -14,6 +15,7 @@ API_KEY = "MWocwVxw_vyA5tM8TiRpZGfkw3OzTkc2"
 
 payment_processor = EcoCashPayment()
 Database="db.sqlite3"
+
 
 
 def get_voucher_by_package(package, db_path=Database):
@@ -58,7 +60,9 @@ def get_voucher_by_package(package, db_path=Database):
 # View to render payment page
 
 def payment_page(request):
-    return render(request, "payment.html")
+
+    packages= Package.objects.all()
+    return render(request, "payment.html",{"packages": packages})
 
 @csrf_exempt
 def api_payment(request):
@@ -66,26 +70,27 @@ def api_payment(request):
         return JsonResponse({"error": "POST required"}, status=400)
 
     data = json.loads(request.body)
+    conn = sqlite3.connect("db.sqlite3")
 
     customer_msisdn = data.get("customerMsisdn")
-    
-    package = data.get("package")  # ✅ CHANGED
-    
+    package = data.get("package")
 
+   
+    
+    
+    cursor = conn.cursor()   # use lowercase variable name
+
+    cursor.execute(
+    "SELECT amount FROM payments_package WHERE package = ?",
+    (package,)
+)
+    row = cursor.fetchone()  # returns tuple like (50,)
+    amount = row
+    print(amount)
+
+    amount=amount[0]
      
-    if package=="1GB":
-        amount=1
-
-    if package=="5GB":
-        amount=5
-    if package=="unlimited":
-        amount=20
-
-    else:
-        amount=10
-
-
-
+     
     customer_msisdn=str(customer_msisdn)
     customer_msisdn=customer_msisdn[1:]
     customer_msisdn="263"+str(customer_msisdn)
@@ -104,7 +109,7 @@ def api_payment(request):
 
 # Retrieve voucher based on package
 
-    time.sleep(20)  
+    time.sleep(30)  
     conn = sqlite3.connect("db.sqlite3")
     cursor = conn.cursor()
 
@@ -139,7 +144,6 @@ def api_payment(request):
     }
     result = {**result, **response_data}
     return JsonResponse(result)
-
 
 
 

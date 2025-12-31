@@ -38,3 +38,15 @@ class Voucher(models.Model):
 
     def __str__(self):
         return self.voucher_code
+    
+
+# models.py
+from django.db import models
+
+class Package(models.Model):
+    package = models.CharField(max_length=50)      # 1GB, 5GB, Unlimited
+    value = models.CharField(max_length=20)     # 1GB, unlimited
+    amount = models.DecimalField(max_digits=8, decimal_places=2)  # price
+
+    def __str__(self):
+        return f"{self.package} - {self.amount}"

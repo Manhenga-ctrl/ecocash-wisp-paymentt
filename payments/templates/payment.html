@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            background: linear-gradient(white, #e0f2fe);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -283,17 +283,16 @@
                         required
                     >
                 </div>
+<div class="form-group">
+    <label for="package">Select Package</label>
+    <select id="package" name="package" required>
+        <option value="" disabled selected>Choose a package...</option>
+        {% for package in packages %}
+            <option value="{{ package.package }}">{{ package.package }}</option>
+        {% endfor %}
+    </select>
+</div>
 
-                <div class="form-group">
-                    <label for="package">Select Package</label>
-                    <select id="package" name="package" required>
-                        <option value="" disabled selected>Choose a package...</option>
-                        <option value="1GB">1GB</option>
-                        <option value="5GB">5GB</option>
-                        <option value="10GB">10GB</option>
-                        <option value="unlimited">Unlimited</option>
-                    </select>
-                </div>
 
                 <button type="submit" class="submit-btn" id="submitBtn">
                     Pay Now
@@ -357,7 +356,7 @@
                         } else {
                             resultDiv.textContent = "✓ Payment request sent. Your voucher will be delivered shortly.";
                         }
-                    }, 2500);
+                    }, 35000);
 
                 } else {
                     resultDiv.className = "result error";
