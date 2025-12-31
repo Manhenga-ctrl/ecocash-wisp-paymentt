@@ -7,7 +7,8 @@ from django.views.decorators.csrf import csrf_exempt
 import sqlite3
 from .services import EcoCashPayment
 import time
-from .models import Package
+from .models import Package, Transaction,Voucher
+from django.db import transaction
 
 
 ECOCASH_STATUS_URL = "https://developers.ecocash.co.zw/api/ecocash_pay/api/v1/transaction/c2b/status/sandbox"
@@ -17,44 +18,29 @@ payment_processor = EcoCashPayment()
 Database="db.sqlite3"
 
 
+def get_voucher_by_package(package):
+    """
+    Fetch one unused voucher for a package and mark it as used.
+    """
+    
 
-def get_voucher_by_package(package, db_path=Database):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
+    with transaction.atomic():
+        # Lock the first unused voucher for this package
+        voucher = (
+            Voucher.objects
+            .select_for_update()       # lock row to prevent race conditions
+            .filter(package=package, used=False)
+            .first()
+        )
 
-    # Lock database to avoid duplicate usage
-    conn.execute("BEGIN IMMEDIATE")
+        if voucher is None:
+            return None
 
-    cursor.execute("""
-        SELECT id, voucher_code
-        FROM payments_voucher
-        WHERE used = 0 AND package = ?
-        LIMIT 1
-    """, (package,))
+        # Mark voucher as used
+        voucher.used = True
+        voucher.save(update_fields=["used"])
 
-    voucher = cursor.fetchone()
-
-    if voucher is None:
-        conn.rollback()
-        conn.close()
-        return None
-
-    voucher_id, voucher_code = voucher
-
-    # Mark as used
-    cursor.execute("""
-        UPDATE payments_voucher
-        SET used = 1
-        WHERE id = ?
-    """, (voucher_id,))
-
-    conn.commit()
-    conn.close()
-
-    return voucher_code
-
-
-
+        return voucher.voucher_code
 
 
 # View to render payment page
@@ -70,26 +56,19 @@ def api_payment(request):
         return JsonResponse({"error": "POST required"}, status=400)
 
     data = json.loads(request.body)
-    conn = sqlite3.connect("db.sqlite3")
+    
 
     customer_msisdn = data.get("customerMsisdn")
     package = data.get("package")
 
    
     
+    try:
+        amount = Package.objects.values_list("amount", flat=True).get(package=package)
+    except Package.DoesNotExist:
+        amount = None
     
-    cursor = conn.cursor()   # use lowercase variable name
-
-    cursor.execute(
-    "SELECT amount FROM payments_package WHERE package = ?",
-    (package,)
-)
-    row = cursor.fetchone()  # returns tuple like (50,)
-    amount = row
-    print(amount)
-
-    amount=amount[0]
-     
+    
      
     customer_msisdn=str(customer_msisdn)
     customer_msisdn=customer_msisdn[1:]
@@ -110,17 +89,15 @@ def api_payment(request):
 # Retrieve voucher based on package
 
     time.sleep(30)  
-    conn = sqlite3.connect("db.sqlite3")
-    cursor = conn.cursor()
+    
 
-    cursor.execute(
-    "SELECT status FROM payments_transaction WHERE customer_msisdn = ?",
-    (customer_msisdn,)
-)
-
-    status = cursor.fetchone()
-    status=status[0]
-
+     
+    try:
+        status = Transaction.objects.values_list("status", flat=True).get(customer_msisdn=customer_msisdn)
+    except Transaction.DoesNotExist:
+        status = None
+    
+    
 
   # Wait for 30 seconds before checking status
     Voucher = get_voucher_by_package(package)

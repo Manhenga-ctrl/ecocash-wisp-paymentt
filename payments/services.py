@@ -16,7 +16,7 @@ class EcoCashPayment:
         payload = {
             "customerMsisdn": customer_msisdn,
             "amount": amount,
-            "reason": package,  # EcoCash still expects "reason"
+            "reason": package, 
             "currency": currency,
             "sourceReference": reference
         }
