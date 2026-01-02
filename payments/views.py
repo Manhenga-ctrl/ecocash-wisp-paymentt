@@ -9,13 +9,19 @@ from .services import EcoCashPayment
 import time
 from .models import Package, Transaction,Voucher
 from django.db import transaction
+import csv
+import io
+from django.shortcuts import render
+from .forms import VoucherUploadForm
+from .models import Voucher
+
 
 
 ECOCASH_STATUS_URL = "https://developers.ecocash.co.zw/api/ecocash_pay/api/v1/transaction/c2b/status/sandbox"
 API_KEY = "MWocwVxw_vyA5tM8TiRpZGfkw3OzTkc2"
 
 payment_processor = EcoCashPayment()
-Database="db.sqlite3"
+
 
 
 def get_voucher_by_package(package):
@@ -124,3 +130,36 @@ def api_payment(request):
 
 
 
+
+def upload_vouchers(request):
+    message = ""
+
+    if request.method == "POST":
+        form = VoucherUploadForm(request.POST, request.FILES)
+
+        if form.is_valid():
+            csv_file = request.FILES['csv_file']
+
+            if not csv_file.name.endswith('.csv'):
+                message = "Please upload a CSV file."
+            else:
+                data = csv_file.read().decode('utf-8')
+                io_string = io.StringIO(data)
+                reader = csv.DictReader(io_string)
+                for row in reader:
+                 Voucher.objects.get_or_create(
+            voucher_code=row['VOUCHER_CODE'].strip(),
+            defaults={
+                'package': row['PACKAGES'].strip()
+            }
+        )
+
+                message = "Vouchers uploaded successfully!"
+
+    else:
+        form = VoucherUploadForm()
+
+    return render(request, 'form.html', {
+        'form': form,
+        'message': message
+    })

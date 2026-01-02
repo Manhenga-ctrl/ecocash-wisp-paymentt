@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-!9t2#v6!xp%xts+e(h_bfsy1gghw4b26ejpk$+9lt_dt*c$vf_
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['10.10.2.33']
+ALLOWED_HOSTS = ['10.10.2.33','localhost', '127.0.0.1']
 
 
 # Application definition
@@ -75,11 +75,14 @@ WSGI_APPLICATION = 'ecocash.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',  # stays the same
+        'NAME': 'Ecocash',
+        'USER': 'linus',
+        'PASSWORD': 'Tetris$76',
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -116,3 +119,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+#static files settings
+

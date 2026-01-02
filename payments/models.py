@@ -4,7 +4,7 @@ class EcoCashTransaction(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
     customer_msisdn = models.CharField(max_length=12)
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    package = models.CharField(max_length=50)  # ✅ CHANGED
+    package = models.CharField(max_length=50)  
     currency = models.CharField(max_length=10, default="USD")
     source_reference = models.CharField(max_length=64, unique=True)
     response = models.TextField()
@@ -41,11 +41,10 @@ class Voucher(models.Model):
     
 
 # models.py
-from django.db import models
 
 class Package(models.Model):
-    package = models.CharField(max_length=50)      # 1GB, 5GB, Unlimited
-    value = models.CharField(max_length=20)     # 1GB, unlimited
+    package = models.CharField(max_length=50)      
+    value = models.CharField(max_length=20)   
     amount = models.DecimalField(max_digits=8, decimal_places=2)  # price
 
     def __str__(self):
