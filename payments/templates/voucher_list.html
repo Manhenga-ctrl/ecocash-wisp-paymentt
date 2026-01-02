@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voucher List</title>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f5f5f5; 
+            padding: 2rem; 
+            color: #425563;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: #01A982;
+        }
+
+        /* ===== Search & Filter ===== */
+        .controls {
+            max-width: 900px;
+            margin: 0 auto 1.5rem auto;
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .controls input, .controls select {
+            padding: 0.5rem 1rem;
+            font-size: 0.95rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        table { 
+            border-collapse: collapse; 
+            width: 100%; 
+            max-width: 900px;
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        th, td { 
+            border: 1px solid #ddd; 
+            padding: 12px; 
+            text-align: center; 
+            font-size: 0.95rem;
+        }
+
+        th { 
+            background-color: #01A982; 
+            color: white; 
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) { 
+            background-color: #f9f9f9; 
+        }
+
+        tr:hover { 
+            background-color: #e0f7f1; 
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            table, thead, tbody, th, td, tr { 
+                display: block; 
+            }
+
+            thead tr {
+                display: none;
+            }
+
+            tr { 
+                margin-bottom: 1rem; 
+                border: 1px solid #ccc;
+                border-radius: 8px;
+                padding: 0.5rem;
+            }
+
+            td { 
+                border: none; 
+                padding: 0.5rem 0; 
+                text-align: right; 
+                position: relative;
+            }
+
+            td::before { 
+                content: attr(data-label); 
+                position: absolute; 
+                left: 0; 
+                width: 50%; 
+                padding-left: 0.5rem;
+                font-weight: 600;
+                text-align: left;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>VOUCHER LIST</h1>
+
+    <!-- Search and Filter Controls -->
+    <div class="controls">
+        <input type="text" id="searchInput" placeholder="Search by Voucher Code..." onkeyup="filterTable()">
+        <select id="packageFilter" onchange="filterTable()">
+            <option value="">All Packages</option>
+            {% for package in packages %}
+                <option value="{{ package.package }}">{{ package.package }}</option>
+            {% endfor %}
+        </select>
+        <select id="usedFilter" onchange="filterTable()">
+            <option value="">All Status</option>
+            <option value="Yes">Used</option>
+            <option value="No">Unused</option>
+
+        </select>
+    </div>
+
+    <!-- Voucher Table -->
+    <table id="voucherTable">
+        <thead>
+            <tr>
+                <th>Voucher Code</th>
+                <th>Package</th>
+                <th>Created At</th>
+                <th>Used</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for voucher in vouchers %}
+        <tr>
+            <td data-label="Voucher Code">{{ voucher.voucher_code }}</td>
+            <td data-label="Package">{{ voucher.package }}</td>
+            <td data-label="Created At">{{ voucher.created_at|date:"Y-m-d H:i" }}</td>
+            <td data-label="Used">{{ voucher.used|yesno:"Yes,No" }}</td>
+            <td data-label="Action">
+                <form method="post" action="{% url 'delete_voucher' voucher.id %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit" style="background:#dc2626; color:white; border:none; padding:5px 10px; border-radius:4px; cursor:pointer;">
+                        Delete
+                    </button>
+                </form>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5">No vouchers found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+    </table>
+
+    <!-- ===== JavaScript Search & Filter ===== -->
+    <script>
+        function filterTable() {
+            const input = document.getElementById('searchInput').value.toUpperCase();
+            const packageFilter = document.getElementById('packageFilter').value.toUpperCase();
+            const usedFilter = document.getElementById('usedFilter').value.toUpperCase();
+            const table = document.getElementById('voucherTable');
+            const tr = table.getElementsByTagName('tr');
+
+            for (let i = 1; i < tr.length; i++) {
+                let tdCode = tr[i].getElementsByTagName('td')[0];
+                let tdPackage = tr[i].getElementsByTagName('td')[1];
+                let tdUsed = tr[i].getElementsByTagName('td')[3];
+
+                if (tdCode && tdPackage && tdUsed) {
+                    let codeText = tdCode.textContent || tdCode.innerText;
+                    let packageText = tdPackage.textContent || tdPackage.innerText;
+                    let usedText = tdUsed.textContent || tdUsed.innerText;
+
+                    if (
+                        codeText.toUpperCase().indexOf(input) > -1 &&
+                        (packageFilter === "" || packageText.toUpperCase() === packageFilter) &&
+                        (usedFilter === "" || usedText.toUpperCase() === usedFilter)
+                    ) {
+                        tr[i].style.display = "";
+                    } else {
+                        tr[i].style.display = "none";
+                    }
+                }
+            }
+        }
+    </script>
+
+</body>
+</html>

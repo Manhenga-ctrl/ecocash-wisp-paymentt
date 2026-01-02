@@ -14,6 +14,8 @@ import io
 from django.shortcuts import render
 from .forms import VoucherUploadForm
 from .models import Voucher
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
 
 
 
@@ -123,7 +125,7 @@ def api_payment(request):
     response_data = {
         "success": True,
         "message": "Payment request sent successfully",
-        "voucher": voucher  # ✅ Send voucher in response
+        "voucher": voucher 
     }
     result = {**result, **response_data}
     return JsonResponse(result)
@@ -133,7 +135,7 @@ def api_payment(request):
 
 def upload_vouchers(request):
     message = ""
-
+    packages= Package.objects.all()
     if request.method == "POST":
         form = VoucherUploadForm(request.POST, request.FILES)
 
@@ -162,4 +164,19 @@ def upload_vouchers(request):
     return render(request, 'form.html', {
         'form': form,
         'message': message
+        
     })
+
+
+
+def voucher_list(request):
+    packages= Package.objects.all()
+    vouchers = Voucher.objects.all().order_by('used')  
+    return render(request, 'voucher_list.html', {'vouchers': vouchers, 'packages': packages})
+
+
+def delete_voucher(request, voucher_id):
+    voucher = get_object_or_404(Voucher, id=voucher_id)
+    voucher.delete()
+    messages.success(request, f"Voucher {voucher.voucher_code} deleted successfully.")
+    return redirect('voucher_list')
